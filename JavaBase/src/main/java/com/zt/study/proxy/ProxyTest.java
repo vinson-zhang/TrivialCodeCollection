@@ -1,6 +1,10 @@
 package com.zt.study.proxy;
 
+import net.sf.cglib.proxy.Enhancer;
 import org.junit.Test;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 
 /**
  * ZhangTao
@@ -16,45 +20,6 @@ public class ProxyTest {
      *
      */
 
-
-    /**
-     * 静态代理测试
-     */
-    interface RunService{
-        void run();
-    }
-
-    /**
-     * 实现类
-     */
-    class RunImpl implements RunService{
-
-        @Override
-        public void run() {
-            System.out.println("跑步..............");
-        }
-    }
-
-    /**
-     * 代理类
-     */
-    class RunProxy implements RunService{
-
-        private RunService runService;
-
-        public RunProxy(RunService runService){
-            this.runService = runService;
-        }
-
-        @Override
-        public void run() {
-            System.out.println("跑步前......");
-            runService.run();
-            System.out.println("跑步后...........");
-        }
-    }
-
-
     @Test
    public void staticProxyTest(){
         RunImpl run = new RunImpl();
@@ -62,6 +27,43 @@ public class ProxyTest {
 
         RunProxy runProxy = new RunProxy(run);
         runProxy.run();
+    }
+
+
+    public static void main(String[] args) {
+        RunImpl run = new RunImpl();
+        InvocationHandler invocationHandler = new JdkDynamicProxy(run);
+
+        RunService runService = (RunService) Proxy.newProxyInstance(run.getClass().getClassLoader(), new Class[]{RunService.class}, invocationHandler);
+
+        runService.run();
+    }
+
+    @Test
+    public void jdkDynamicProxy(){
+
+        RunImpl run = new RunImpl();
+        InvocationHandler invocationHandler = new JdkDynamicProxy(run);
+
+        RunService runService = (RunService) Proxy.newProxyInstance(run.getClass().getClassLoader(), new Class[]{RunService.class}, invocationHandler);
+
+        runService.run();
+    }
+
+
+    @Test
+    public void cglibProxyTest(){
+        // 字节码增强器
+        Enhancer enhancer = new Enhancer();
+        // 设置被代理类为父类
+        enhancer.setSuperclass(User.class);
+        // 设置回调
+        enhancer.setCallback(new CglibProxyInterceptor());
+
+        User user = (User) enhancer.create();
+        user.eat();
+
+
     }
 
 
